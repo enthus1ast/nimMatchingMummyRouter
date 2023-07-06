@@ -48,7 +48,6 @@ proc toHandler*(matchRouter: MatchRouter): RequestHandler =
               defaultMethodNotAllowed(request, mt)
             break
       if not oneMatched:
-        echo "NOT MATCHED"
         if matchRouter.notFoundHandler != nil:
           # Call user supplied not found handler
           matchRouter.notFoundHandler(request)

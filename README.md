@@ -22,8 +22,8 @@ router.post("/api/v1/record/@id:int", getOneRecordHandler)
 router.get("/api/v1/recordGET/@id:int", getOneRecordHandler)
 
 # Shows all different datatypes, matches on:
-# /yes/1337/21.42/foo
-router.get("/@mybool:bool/@myint:int/@myfloat:float/@mystring:string", dumpHandler)
+# /yes/-1337/23/21.42/foo
+router.get("/@mybool:bool/@myint:int/@myabsint:absint/@myfloat:float/@mystring:string", dumpHandler)
 
 let server = newServer(router)
 server.serve(Port(9090))
