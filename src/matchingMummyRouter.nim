@@ -25,42 +25,61 @@ proc defaultMethodNotAllowed*(request: Request, mt: MatchTable) =
   headers["Content-Type"] = "text/plain"
   request.respond(405, headers, "method not allowed")
 
+proc defaultErrorHandler*(request: Request, mt: MatchTable) =
+  var headers: HttpHeaders
+  headers["Content-Type"] = "text/plain"
+  request.respond(405, headers, "method not allowed")
+
+proc callMethodNotAllowedHandler(matchRouter: MatchRouter, request: Request, mt: MatchTable) =
+  if matchRouter.methodNotAllowedHandler != nil:
+    # Call user supplied methodNotAllowedHandler
+    matchRouter.methodNotAllowedHandler(request, mt)
+  else:
+    # Call default methodNotAllowedHandler
+    defaultMethodNotAllowed(request, mt)
+
+proc callNotFoundHandler(matchRouter: MatchRouter, request: Request) =
+  if matchRouter.notFoundHandler != nil:
+    # Call user supplied not found handler
+    matchRouter.notFoundHandler(request)
+  else:
+    # Call default not found handler
+    defaultNotFound(request)
+
+proc callErrorHandler(matchRouter: MatchRouter, request: Request, e: ref Exception) = 
+  if matchRouter.errorHandler != nil:
+    # Call the error handler if we have any
+    matchRouter.errorHandler(request, e)
+  else:
+    raise(e) # forward the error
+
 proc toHandler*(matchRouter: MatchRouter): RequestHandler =
-  return proc(request: Request)  {.gcsafe.} =
+  return proc(request: Request) {.gcsafe.} =
     var oneMatched = false
+    var fullyMatched = false
     try:
+      var mt = newMatchTable()
       for mr in matchRouter.routes:
-        var mt = newMatchTable()
+        mt.clear()
         if match(request.uri, mr.matcher, mt):
           if request.httpMethod == mr.httpMethod:
             # Route + httpMethod matched 
             mr.handler(request, mt)
             oneMatched = true
+            fullyMatched = true
             break
           else:
             # Route matched but httpMethod not
             oneMatched = true
-            if matchRouter.methodNotAllowedHandler != nil:
-              # Call user supplied methodNotAllowedHandler
-              matchRouter.methodNotAllowedHandler(request, mt)
-            else:
-              # Call default methodNotAllowedHandler
-              defaultMethodNotAllowed(request, mt)
-            break
+
       if not oneMatched:
-        if matchRouter.notFoundHandler != nil:
-          # Call user supplied not found handler
-          matchRouter.notFoundHandler(request)
-        else:
-          # Call default not found handler
-          defaultNotFound(request)
+        matchRouter.callNotFoundHandler(request)
+      if not fullyMatched:
+        matchRouter.callMethodNotAllowedHandler(request, mt)
+
     except:
       let e = getCurrentException()
-      if matchRouter.errorHandler != nil:
-        # Call the error handler if we have any
-        matchRouter.errorHandler(request, e)
-      else:
-        raise(e) # forward the error
+      matchRouter.callErrorHandler(request, e)
     
 proc get*(matchRouter: var MatchRouter, matcher: string, handler: MatchRequestHandler) =
   matchRouter.routes.add MatchRoute(httpMethod: "GET", matcher: matcher, handler: handler)
