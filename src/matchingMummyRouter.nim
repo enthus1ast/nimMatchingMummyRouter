@@ -74,7 +74,7 @@ proc toHandler*(matchRouter: MatchRouter): RequestHandler =
 
       if not oneMatched:
         matchRouter.callNotFoundHandler(request)
-      if not fullyMatched:
+      elif not fullyMatched:
         matchRouter.callMethodNotAllowedHandler(request, mt)
 
     except:
