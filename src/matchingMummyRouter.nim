@@ -45,6 +45,7 @@ proc staticFileHandler*(request: Request, mt: MatchTable) =
   let mimetype = m.getMimeType(ext)
   let filePath = getAppDir() / path
 
+
   # {.gcsafe.}:
   #   print path, request.uri, ext, mimetype, filePath
 
@@ -59,6 +60,7 @@ proc staticFileHandler*(request: Request, mt: MatchTable) =
 
   headers["Content-Type"] = mimetype
   headers["Content-Length"] = $getFileSize(filePath)
+  headers["Connection"] = "close"
   request.respond(200, headers, readFile(filePath))
 
 proc defaultMethodNotAllowed*(request: Request, mt: MatchTable) =
