@@ -1,7 +1,7 @@
 import mummy, mummy/routers
 import urlMatcher
 export urlMatcher
-
+import strutils, os, mimetypes
 
 type 
   MatchRequestHandler* = proc (request: Request, mt: MatchTable) {.gcsafe.}
@@ -15,10 +15,51 @@ type
     methodNotAllowedHandler*: MatchRequestHandler
     errorHandler*: RequestErrorHandler
 
+when (NimMajor, NimMinor, NimPatch) >= (1,9,3):
+  # Mimetypes is a ref on older versions
+  const m = newMimetypes()
+
 proc defaultNotFound*(request: Request) =
   var headers: HttpHeaders
   headers["Content-Type"] = "text/plain"
   request.respond(404, headers, "not found")
+
+
+proc staticFileHandler*(request: Request, mt: MatchTable) =
+  ## Static file handler
+  var path = request.uri
+  # var path = mt["**"]
+  var headers: HttpHeaders
+
+  if path.contains(".."):
+    # return404
+    # callNotFoundHandler ## how to get the router from a handler?
+    defaultNotFound(request)
+    return
+
+  let ext = path.splitFile().ext
+
+  when (NimMajor, NimMinor, NimPatch) <= (1,9,3):
+    # Mimetypes is a ref on older versions
+    let m = newMimetypes()
+  let mimetype = m.getMimeType(ext)
+  let filePath = getAppDir() / path
+
+  # {.gcsafe.}:
+  #   print path, request.uri, ext, mimetype, filePath
+
+  if not fileExists(filePath):
+    defaultNotFound(request)
+    return
+
+  var fp = getFilePermissions(filePath)
+  if not fp.contains(fpOthersRead):
+    defaultNotFound(request)
+    return
+
+  headers["Content-Type"] = mimetype
+  headers["Content-Length"] = $getFileSize(filePath)
+  request.respond(200, headers, readFile(filePath))
 
 proc defaultMethodNotAllowed*(request: Request, mt: MatchTable) =
   var headers: HttpHeaders
