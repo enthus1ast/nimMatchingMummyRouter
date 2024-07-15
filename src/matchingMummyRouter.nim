@@ -3,6 +3,9 @@ import urlMatcher
 export urlMatcher
 import strutils, os, mimetypes
 
+when not defined(release):
+  import print
+
 type 
   MatchRequestHandler* = proc (request: Request, mt: MatchTable) {.gcsafe.}
   MatchRoute* = object
@@ -24,10 +27,14 @@ proc defaultNotFound*(request: Request) =
   headers["Content-Type"] = "text/plain"
   request.respond(404, headers, "not found")
 
+proc defaultForbidden*(request: Request) =
+  var headers: HttpHeaders
+  headers["Content-Type"] = "text/plain"
+  request.respond(403, headers, "forbidden")
 
 proc staticFileHandler*(request: Request, mt: MatchTable) =
   ## Static file handler
-  var path = request.uri
+  var path = request.uri.decodeUrl()
   # var path = mt["**"]
   var headers: HttpHeaders
 
@@ -46,8 +53,9 @@ proc staticFileHandler*(request: Request, mt: MatchTable) =
   let filePath = getAppDir() / path
 
 
-  # {.gcsafe.}:
-  #   print path, request.uri, ext, mimetype, filePath
+  when not defined(release):
+    {.gcsafe.}:
+      print path, request.uri, ext, mimetype, filePath
 
   if not fileExists(filePath):
     defaultNotFound(request)
@@ -55,7 +63,7 @@ proc staticFileHandler*(request: Request, mt: MatchTable) =
 
   var fp = getFilePermissions(filePath)
   if not fp.contains(fpOthersRead):
-    defaultNotFound(request)
+    defaultForbidden(request)
     return
 
   headers["Content-Type"] = mimetype
