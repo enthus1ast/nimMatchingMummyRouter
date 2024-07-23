@@ -67,7 +67,6 @@ proc staticFileHandler*(request: Request, mt: MatchTable) =
     return
 
   headers["Content-Type"] = mimetype
-  headers["Content-Length"] = $getFileSize(filePath)
   headers["Connection"] = "close"
   request.respond(200, headers, readFile(filePath))
 
