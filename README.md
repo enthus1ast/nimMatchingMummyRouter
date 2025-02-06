@@ -20,6 +20,13 @@ proc dumpHandler(request: Request, mt: MatchTable) =
   headers["Content-Type"] = "text/plain"
   request.respond(200, headers, $mt)
 
+proc getHandlerForVhost(request: Request, mt: MatchTable) =
+  var headers: HttpHeaders
+  headers["Content-Type"] = "text/plain"
+  request.respond(200, headers, "vhost myhost.de")
+
+
+router.get("myhost.de", "/", getHandlerForVhost)
 
 router.post("/api/v1/record/@id:int", getOneRecordHandler)
 router.get("/api/v1/recordGET/@id:int", getOneRecordHandler)
@@ -36,4 +43,7 @@ server.serve(Port(9090))
 
 ```
 
+Changelog:
 
+    - 0.5.0 Vhost matching; all http verb procs (get, post, etc)
+        got a `vhost` attribute, those handlers must be defined BEFORE the generic handlers TODO

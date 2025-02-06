@@ -45,7 +45,7 @@ proc dumpHandler(request: Request, mt: MatchTable) =
 
 router.get("localhost", "/", localhostHandler)
 router.get("foobaa.de", "/", foobaaHandler)
-router.get("/", indexHandler) ## this will overrule all the vhost handlers, but should just 
+router.get("/", indexHandler) ## this will overrule all the vhost handlers if its not the last entry
 
 
 # router.get("/static/id:int/**", dumpHandler)
