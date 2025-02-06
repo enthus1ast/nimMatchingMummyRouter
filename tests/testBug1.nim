@@ -17,6 +17,10 @@ import mummy
 import matchingMummyRouter
 var router: MatchRouter
 
+proc indexHandler (request: Request, mt: MatchTable) =
+  var headers: HttpHeaders
+  headers["Content-Type"] = "text/plain"
+  request.respond(200, headers, "INDEX")
 
 proc localhostHandler(request: Request, mt: MatchTable) =
   var headers: HttpHeaders
@@ -39,8 +43,10 @@ proc dumpHandler(request: Request, mt: MatchTable) =
   headers["Content-Type"] = "text/plain"
   request.respond(200, headers, $mt)
 
-router.get("/", "localhost", localhostHandler)
-router.get("/", "foobaa.de", foobaaHandler)
+router.get("localhost", "/", localhostHandler)
+router.get("foobaa.de", "/", foobaaHandler)
+router.get("/", indexHandler) ## this will overrule all the vhost handlers, but should just 
+
 
 # router.get("/static/id:int/**", dumpHandler)
 # router.get("/static/**", dumpHandler)

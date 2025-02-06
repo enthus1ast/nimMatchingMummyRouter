@@ -114,20 +114,12 @@ proc toHandler*(matchRouter: MatchRouter): RequestHandler =
       var mt = newMatchTable()
       for mr in matchRouter.routes:
         mt.clear()
-        # echo "mr.vhost:", mr.vhost
-        # echo "request.header[Host]: ", request.headers["Host"]
-        # echo "request.header: ", request.headers
 
-        ## Parse uri expects a schema:
+        ## Parse uri expects a schema, we fix this here
         let fixuri = ("https://" & request.headers["Host"]).parseUri()
         let host = fixuri.hostname
-        # echo "HOST (fixed):", host
-        # echo "request.header: ", request.headers["Host"].parseUri()
-        {.cast(gcsafe).}:
-          # print request.headers["Host"].parseUri()
-          # print host
         if mr.vhost.len != 0: # if a vhost is specified
-          if mr.vhost != host:  #request.headers["Host"]:
+          if mr.vhost != host:
             continue # if vhost does not match
         if match(request.uri, mr.matcher, mt):
           if request.httpMethod == mr.httpMethod:
@@ -149,9 +141,7 @@ proc toHandler*(matchRouter: MatchRouter): RequestHandler =
       let e = getCurrentException()
       matchRouter.callErrorHandler(request, e)
 
-proc get*(matchRouter: var MatchRouter, matcher: string, vhost: string, handler: MatchRequestHandler) =
-  matchRouter.routes.add MatchRoute(httpMethod: "GET", matcher: matcher, vhost: vhost, handler: handler)
-    
+# No vhost matching    
 proc get*(matchRouter: var MatchRouter, matcher: string, handler: MatchRequestHandler) =
   matchRouter.routes.add MatchRoute(httpMethod: "GET", matcher: matcher, handler: handler)
 
@@ -169,6 +159,25 @@ proc options*(matchRouter: var MatchRouter, matcher: string, handler: MatchReque
 
 proc patch*(matchRouter: var MatchRouter, matcher: string, handler: MatchRequestHandler) =
   matchRouter.routes.add MatchRoute(httpMethod: "PATCH", matcher: matcher, handler: handler)
+
+# With vhost matching
+proc get*(matchRouter: var MatchRouter, vhost: string, matcher: string, handler: MatchRequestHandler) =
+  matchRouter.routes.add MatchRoute(httpMethod: "GET", matcher: matcher, vhost: vhost, handler: handler)
+
+proc post*(matchRouter: var MatchRouter, vhost: string,  matcher: string, handler: MatchRequestHandler) =
+  matchRouter.routes.add MatchRoute(httpMethod: "POST", vhost: vhost,  matcher: matcher, handler: handler)
+
+proc put*(matchRouter: var MatchRouter, vhost: string,  matcher: string, handler: MatchRequestHandler) =
+  matchRouter.routes.add MatchRoute(httpMethod: "PUT", vhost: vhost,  matcher: matcher, handler: handler)
+
+proc delete*(matchRouter: var MatchRouter, vhost: string,  matcher: string, handler: MatchRequestHandler) =
+  matchRouter.routes.add MatchRoute(httpMethod: "DELETE", vhost: vhost,  matcher: matcher, handler: handler)
+
+proc options*(matchRouter: var MatchRouter, vhost: string,  matcher: string, handler: MatchRequestHandler) =
+  matchRouter.routes.add MatchRoute(httpMethod: "OPTIONS", vhost: vhost,  matcher: matcher, handler: handler)
+
+proc patch*(matchRouter: var MatchRouter, vhost: string,  matcher: string, handler: MatchRequestHandler) =
+  matchRouter.routes.add MatchRoute(httpMethod: "PATCH", vhost: vhost,  matcher: matcher, handler: handler)
 
 converter convertToHandler*(matchRouter: MatchRouter): RequestHandler =
   matchRouter.toHandler()
