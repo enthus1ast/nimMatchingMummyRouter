@@ -9,6 +9,7 @@ when not defined(release):
 type 
   MatchRequestHandler* = proc (request: Request, mt: MatchTable) {.gcsafe.}
   MatchRoute* = object
+    vhost: string
     httpMethod: string
     matcher: string
     handler: MatchRequestHandler
@@ -103,6 +104,8 @@ proc callErrorHandler(matchRouter: MatchRouter, request: Request, e: ref Excepti
   else:
     raise(e) # forward the error
 
+import print
+
 proc toHandler*(matchRouter: MatchRouter): RequestHandler =
   return proc(request: Request) {.gcsafe.} =
     var oneMatched = false
@@ -111,6 +114,21 @@ proc toHandler*(matchRouter: MatchRouter): RequestHandler =
       var mt = newMatchTable()
       for mr in matchRouter.routes:
         mt.clear()
+        # echo "mr.vhost:", mr.vhost
+        # echo "request.header[Host]: ", request.headers["Host"]
+        # echo "request.header: ", request.headers
+
+        ## Parse uri expects a schema:
+        let fixuri = ("https://" & request.headers["Host"]).parseUri()
+        let host = fixuri.hostname
+        # echo "HOST (fixed):", host
+        # echo "request.header: ", request.headers["Host"].parseUri()
+        {.cast(gcsafe).}:
+          # print request.headers["Host"].parseUri()
+          # print host
+        if mr.vhost.len != 0: # if a vhost is specified
+          if mr.vhost != host:  #request.headers["Host"]:
+            continue # if vhost does not match
         if match(request.uri, mr.matcher, mt):
           if request.httpMethod == mr.httpMethod:
             # Route + httpMethod matched 
@@ -130,6 +148,9 @@ proc toHandler*(matchRouter: MatchRouter): RequestHandler =
     except:
       let e = getCurrentException()
       matchRouter.callErrorHandler(request, e)
+
+proc get*(matchRouter: var MatchRouter, matcher: string, vhost: string, handler: MatchRequestHandler) =
+  matchRouter.routes.add MatchRoute(httpMethod: "GET", matcher: matcher, vhost: vhost, handler: handler)
     
 proc get*(matchRouter: var MatchRouter, matcher: string, handler: MatchRequestHandler) =
   matchRouter.routes.add MatchRoute(httpMethod: "GET", matcher: matcher, handler: handler)

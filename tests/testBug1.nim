@@ -17,6 +17,17 @@ import mummy
 import matchingMummyRouter
 var router: MatchRouter
 
+
+proc localhostHandler(request: Request, mt: MatchTable) =
+  var headers: HttpHeaders
+  headers["Content-Type"] = "text/plain"
+  request.respond(200, headers, "INDEX localhost")
+
+proc foobaaHandler(request: Request, mt: MatchTable) =
+  var headers: HttpHeaders
+  headers["Content-Type"] = "text/plain"
+  request.respond(200, headers, "INDEX foobaa")
+
 proc getOneRecordHandler(request: Request, mt: MatchTable) =
   var headers: HttpHeaders
   headers["Content-Type"] = "text/plain"
@@ -28,6 +39,8 @@ proc dumpHandler(request: Request, mt: MatchTable) =
   headers["Content-Type"] = "text/plain"
   request.respond(200, headers, $mt)
 
+router.get("/", "localhost", localhostHandler)
+router.get("/", "foobaa.de", foobaaHandler)
 
 # router.get("/static/id:int/**", dumpHandler)
 # router.get("/static/**", dumpHandler)
