@@ -10,4 +10,6 @@ srcDir        = "src"
 # Dependencies
 
 requires "nim >= 1.6.14"
+requires "mummy"
+requires "webby"
 requires "https://github.com/enthus1ast/nimUrlMatcher.git >= 0.4.0"
