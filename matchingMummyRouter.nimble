@@ -1,6 +1,6 @@
 # Package
 
-version       = "0.5.0"
+version       = "0.6.0"
 author        = "David Krause (enthus1ast)"
 description   = "A mummy router that captures parts of the url + staticFiles"
 license       = "MIT"

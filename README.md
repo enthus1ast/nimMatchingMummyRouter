@@ -45,5 +45,7 @@ server.serve(Port(9090))
 
 Changelog:
 
+    - 0.6.0 Fixed bug; now optional (query) parameters are allowed (but ignored) in static file handler. 
+        Good for cache invalidation
     - 0.5.0 Vhost matching; all http verb procs (get, post, etc)
         got a `vhost` attribute, those handlers must be defined BEFORE the generic handlers TODO

@@ -35,7 +35,7 @@ proc defaultForbidden*(request: Request) =
 
 proc staticFileHandler*(request: Request, mt: MatchTable) =
   ## Static file handler
-  var path = request.uri.decodeUrl()
+  var path = request.uri.path.decodeUrl()
   # var path = mt["**"]
   var headers: HttpHeaders
 
